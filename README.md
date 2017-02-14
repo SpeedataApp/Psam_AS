@@ -2,13 +2,12 @@
 -  导入依赖库
 
 
-
 **AndroidStudio** build.gradle中的dependencies中添加
 
 ```
  dependencies {
     compile 'com.speedata:deivice:1.1'
-    compile 'com.speedata:psam:1.0'
+    compile 'com.speedata:psam:1.1'
   }
 ```
 **Eclipse** 需导入libs库 LibDevice 和 LibIdentity
@@ -40,14 +39,22 @@
 
 -  软使能
 
-函数原型|boolean PsamPower(PowerType type)                                  |
+函数原型|void PsamPower(PowerType type)                                  |
 -------    |-------
 |功能描述  |模块软使能|
 |参数描述  |PowerType type 卡1/卡2 |
-|返回类型  |boolean 该卡槽有卡返回true 反之|
+|返回类型  |无|
+
+
+
+上电结果需接受广播
+ POWER_ACTION 广播
+ boolean POWER_RESULT 上电结果
+ int POWER_TYPE 1 卡1  2卡2
 
 
 -  初始化设备
+
 
 |函数原型|void initDev(String serialport, int braut, DeviceControl.PowerType power_typeint, Context context, int ...  gpio );	                                   |
 -------    |-------
@@ -67,6 +74,16 @@
    psam.initDev(serialport, baurate, DeviceControl.PowerType.MAIN_AND_EXPAND,
                 this, 88, 2);
 ```
+
+-  复位
+
+|函数原型|void resetDev(DeviceControl.PowerType type,int Gpio)	                                   |
+-------    |-------
+|功能描述  |发送数据|
+|参数描述  |DeviceControl.PowerType 上电类型|
+|参数描述  |int Gpio|
+|返回类型  |无  |
+
 
 -  发送数据
 
