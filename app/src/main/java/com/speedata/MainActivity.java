@@ -95,11 +95,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
 
-
-
-
     String send_data = "";
-     //获取psam实例
+    //获取psam实例
     IPsam psamIntance = PsamManager.getPsamIntance();
 
 
@@ -129,9 +126,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
             if (psamflag == 1) {
                 try {
                     tvShowData.setText("Psam1 Send data：00 84 00 00 08\n");
+                    //读取长度20   最大延时10ms  此方法  耗时应该在15ms左右
                     byte[] data = psamIntance.WriteCmd(new byte[]{0x00, (byte) 0x84, 0x00, 0x00,
                             0x08}, IPsam
-                            .PowerType.Psam1);
+                            .PowerType.Psam1, 20, 10);
                     if (data != null)
                         tvShowData.append("rece->" + DataConversionUtils.byteArrayToString(data));
                 } catch (UnsupportedEncodingException e) {
