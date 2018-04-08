@@ -126,9 +126,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         for (Integer s : gpio1) {
             gpio += s + ",";
         }
-//        tvConfig.append("串口:" + pasm.getSerialPort() + "  波特率：" + pasm.getBraut() + " 上电类型:" +
-//                pasm.getPowerType() + " GPIO:" + gpio + " resetGpio:" + pasm.getResetGpio());
-        tvConfig.append("串口:ttyMT1"  + "  波特率：115200"  + " GPIO:67,73"  + " resetGpio:66" );
+        tvConfig.append("串口:" + pasm.getSerialPort() + "  波特率：" + pasm.getBraut() + " 上电类型:" +
+                pasm.getPowerType() + " GPIO:" + gpio + " resetGpio:" + pasm.getResetGpio());
+//        tvConfig.append("串口:ttyMT1"  + "  波特率：115200"  + " GPIO:67,73"  + " resetGpio:66" );
     }
 
 
@@ -175,8 +175,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         if (v == imgReset) {
-//            psamIntance.resetDev();
-            psamIntance.resetDev(DeviceControl.PowerType.MAIN,66);
+            psamIntance.resetDev();
+//            psamIntance.resetDev(DeviceControl.PowerType.MAIN,66);
         } else if (v == btn1Activite) {
             psamflag = 1;
             byte[] data = psamIntance.PsamPower(IPsam.PowerType.Psam1);
@@ -495,12 +495,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private void initDevice() {
         try {
-//            psamIntance.initDev(this);//初始化设备
-            psamIntance.initDev("ttyMT1",115200, DeviceControl.PowerType.MAIN,this,67);
-            deviceControl1 = new DeviceControl(DeviceControl.PowerType.MAIN);
-            deviceControl1.MainPowerOn(73);
-            psamIntance.resetDev(DeviceControl.PowerType.MAIN,66);
-//            psamIntance.resetDev();//复位
+            psamIntance.initDev(this);//初始化设备
+//            psamIntance.initDev("ttyMT1",115200, DeviceControl.PowerType.MAIN,this,67);
+//            deviceControl1 = new DeviceControl(DeviceControl.PowerType.MAIN);
+//            deviceControl1.MainPowerOn(73);
+//            psamIntance.resetDev(DeviceControl.PowerType.MAIN,66);
+            psamIntance.resetDev();//复位
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(0);
