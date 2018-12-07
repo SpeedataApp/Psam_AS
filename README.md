@@ -6,8 +6,8 @@
 
 ```
  dependencies {
-    compile 'com.speedata:deivice:1.4'
-    compile 'com.speedata:psam:1.4'
+    compile 'com.speedata:deivice:1.6.0'
+    compile 'com.speedata:psam:1.5.3'
   }
 ```
 **Eclipse** 需导入libs库 LibDevice 和 LibIdentity
