@@ -6,7 +6,7 @@
 
 ```
  dependencies {
-    implementation 'com.speedata:psam:1.5.4'
+    implementation 'com.github.SpeedataG:Device:1.6.4'
     implementation 'com.speedata:psam:1.5.4'
     implementation 'com.alibaba:fastjson:1.2.54'
   }
