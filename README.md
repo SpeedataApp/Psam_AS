@@ -6,10 +6,23 @@
 
 ```
  dependencies {
-    compile 'com.speedata:deivice:1.6.0'
-    compile 'com.speedata:psam:1.5.3'
+    implementation 'com.speedata:psam:1.5.4'
+    implementation 'com.speedata:psam:1.5.4'
+    implementation 'com.alibaba:fastjson:1.2.54'
   }
 ```
+外层gtadle
+repositories {
+        jcenter()
+        google()
+        maven { url 'https://www.jitpack.io' }
+ }
+ repositories {
+        jcenter()
+        google()
+        maven { url 'https://www.jitpack.io' }
+ }  
+    
 **Eclipse** 需导入libs库 LibDevice 和 LibIdentity
 依赖以上两个lib库  运行时编译即可
 
