@@ -11,7 +11,8 @@
     implementation 'com.alibaba:fastjson:1.2.54'
   }
 ```
-外层gtadle
+**外层gtadle添加
+```
 repositories {
         jcenter()
         google()
@@ -22,7 +23,7 @@ repositories {
         google()
         maven { url 'https://www.jitpack.io' }
  }  
-    
+```   
 **Eclipse** 需导入libs库 LibDevice 和 LibIdentity
 依赖以上两个lib库  运行时编译即可
 
