@@ -18,11 +18,7 @@ repositories {
         google()
         maven { url 'https://www.jitpack.io' }
  }
- repositories {
-        jcenter()
-        google()
-        maven { url 'https://www.jitpack.io' }
- }  
+
 ```   
 **Eclipse** 需导入libs库 LibDevice 和 LibIdentity
 依赖以上两个lib库  运行时编译即可
