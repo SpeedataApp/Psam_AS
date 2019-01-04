@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Psam_AS.iml" filepath="$PROJECT_DIR$/.idea/Psam_AS.iml" />
-      <module fileurl="file://D:\SpeedataDemo18\Psam_AS\Psam_AS.iml" filepath="D:\SpeedataDemo18\Psam_AS\Psam_AS.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Psam_AS.iml" filepath="$PROJECT_DIR$/Psam_AS.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

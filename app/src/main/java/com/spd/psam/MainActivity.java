@@ -1,29 +1,31 @@
-package com.speedata;
+package com.spd.psam;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
-import android.serialport.DeviceControl;
-import android.serialport.SerialPort;
+import android.serialport.DeviceControlSpd;
+import android.serialport.SerialPortSpd;
 import android.support.annotation.NonNull;
 import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.speedata.libutils.ConfigUtils;
 import com.speedata.libutils.DataConversionUtils;
 import com.speedata.libutils.ReadBean;
+import com.speedata.utils.ProgressDialogUtils;
 import com.umeng.analytics.MobclickAgent;
 import com.yanzhenjie.permission.AndPermission;
 import com.yanzhenjie.permission.PermissionListener;
@@ -37,52 +39,14 @@ import java.util.List;
 
 import speedatacom.a3310libs.PsamManager;
 import speedatacom.a3310libs.inf.IPsam;
-import speedatagroup.brxu.com.workdemo.R;
+
 
 public class MainActivity extends Activity implements View.OnClickListener {
-
-    //19200 9600
-    private Button btn1Activite, btn2Activite, btnGetRomdan,
-            btnSendAdpu, btnClear, btnOpenSerial, btnPsam4442, btn4442Cmd;
-    private EditText edvADPU;
-    private TextView tvShowData;
-    private int psamflag = 0;
-    private Context mContext;
-    private TextView tvVerson;
-    private TextView tvConfig;
-    private ImageView imgReset;
-    private Button btnOriginalCmd, btn_change_b;
-    private SerialPort serialPort;
-    private DeviceControl deviceControl;
-    private int ii = 115200;
-    private DeviceControl deviceControl1;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        super.onCreate(savedInstanceState);
-        mContext = this;
-        initUI();
-        showConfig();
-        initDevice();
-        serialPort = new SerialPort();
-        permission(permiss);
-    }
-
+    public ReadBean.PasmBean psam;
     String[] permiss = {"android.permission.ACCESS_NETWORK_STATE"
             , "android.permission.ACCESS_WIFI_STATE"
             , "android.permission.READ_PHONE_STATE"
             , "android.permission.INTERNET"};
-
-    private void permission(String[] permiss) {
-        AndPermission.with(this).permission(Manifest.permission.READ_PHONE_STATE).callback(listener).rationale(new RationaleListener() {
-            @Override
-            public void showRequestPermissionRationale(int requestCode, Rationale rationale) {
-                AndPermission.rationaleDialog(MainActivity.this, rationale).show();
-            }
-        }).start();
-    }
-
     PermissionListener listener = new PermissionListener() {
         @Override
         public void onSucceed(int requestCode, @NonNull List<String> grantPermissions) {
@@ -97,6 +61,63 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }
         }
     };
+    String send_data = "";
+    int yourChoice;
+    private Button btn1Activite, btn2Activite, btnGetRomdan,
+            btnSendAdpu, btnClear, btnOpenSerial, btnPsam4442, btn4442Cmd;
+    private EditText edvADPU;
+    private TextView tvShowData;
+    private int psamflag = 0;
+    private Context mContext;
+    private TextView tvVerson;
+    private TextView tvConfig;
+    private TextView imgReset;
+    private Button btnOriginalCmd, btnChangeB;
+    private SerialPortSpd serialPort;
+    private DeviceControlSpd deviceControl1;
+    //获取psam实例
+    private IPsam psamIntance = PsamManager.getPsamIntance();
+
+    /**
+     * 截取数组
+     *
+     * @param bytes
+     *         被截取数组
+     * @param start
+     *         被截取数组开始截取位置
+     * @param length
+     *         新数组的长度
+     *
+     * @return 新数组
+     */
+    public static byte[] cutBytes(byte[] bytes, int start, int length) {
+        byte[] res = new byte[length];
+        System.arraycopy(bytes, start, res, 0, length);
+        return res;
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main2);
+        mContext = this;
+        initUI();
+        showConfig();
+        initDefaultDev();
+        //        initDevice();
+        serialPort = new SerialPortSpd();
+        edvADPU.clearFocus();
+        //        permission(permiss);
+    }
+
+    private void permission(String[] permiss) {
+        AndPermission.with(this).permission(Manifest.permission.READ_PHONE_STATE).callback(listener).rationale(new RationaleListener() {
+            @Override
+            public void showRequestPermissionRationale(int requestCode, Rationale rationale) {
+                AndPermission.rationaleDialog(MainActivity.this, rationale).show();
+            }
+        }).start();
+    }
 
     @Override
     protected void onResume() {
@@ -111,45 +132,42 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     private void showConfig() {
-
         String verson = getVersion();
-        tvVerson.setText("V" + verson);
-
+        tvVerson.setText("V:" + verson);
         boolean isExit = ConfigUtils.isConfigFileExists();
-        if (isExit)
+        if (isExit) {
             tvConfig.setText("定制配置：\n");
-        else
+        } else {
             tvConfig.setText("标准配置：\n");
-        ReadBean.PasmBean pasm = ConfigUtils.readConfig(this).getPasm();
+        }
+        psam = ConfigUtils.readConfig(this).getPasm();
         String gpio = "";
-        List<Integer> gpio1 = pasm.getGpio();
+        List<Integer> gpio1 = psam.getGpio();
         for (Integer s : gpio1) {
             gpio += s + ",";
         }
-        tvConfig.append("串口:" + pasm.getSerialPort() + "  波特率：" + pasm.getBraut() + " 上电类型:" +
-                pasm.getPowerType() + " GPIO:" + gpio + " resetGpio:" + pasm.getResetGpio());
-//        tvConfig.append("串口:ttyMT1"  + "  波特率：115200"  + " GPIO:67,73"  + " resetGpio:66" );
+        tvConfig.append("串口:" + psam.getSerialPort() + "  波特率：" + psam.getBraut() + " 上电类型:" +
+                psam.getPowerType() + " GPIO:" + gpio + " resetGpio:" + psam.getResetGpio());
+        //        tvConfig.append("串口:ttyMT1" + "  波特率：115200" + " gpio:93" + " resetGpio:94");
     }
 
-
     private void initUI() {
-        setContentView(R.layout.activity_main);
-        imgReset = (ImageView) findViewById(R.id.img_reset);
+        imgReset = findViewById(R.id.img_reset);
         imgReset.setOnClickListener(this);
-        tvConfig = (TextView) findViewById(R.id.tv_config);
-        btn1Activite = (Button) findViewById(R.id.btn1_active);
-        btnOpenSerial = (Button) findViewById(R.id.btn_OpenSerial);
-        btn2Activite = (Button) findViewById(R.id.btn2_active);
-        btnGetRomdan = (Button) findViewById(R.id.btn_get_ramdon);
-        btnSendAdpu = (Button) findViewById(R.id.btn_send_adpu);
-        btnClear = (Button) findViewById(R.id.btn_clear);
-        tvVerson = (TextView) findViewById(R.id.tv_verson);
-        btnOriginalCmd = (Button) findViewById(R.id.btn_original_cmd);
-        btn_change_b = (Button) findViewById(R.id.btn_change_b);
-        btnPsam4442 = (Button) findViewById(R.id.btn_get_psam4442);
-        btn4442Cmd = (Button) findViewById(R.id.btn_4442_cmd);
+        tvConfig = findViewById(R.id.tv_config);
+        btn1Activite = findViewById(R.id.btn1_active);
+        btnOpenSerial = findViewById(R.id.btn_OpenSerial);
+        btn2Activite = findViewById(R.id.btn2_active);
+        btnGetRomdan = findViewById(R.id.btn_get_ramdon);
+        btnSendAdpu = findViewById(R.id.btn_send_adpu);
+        btnClear = findViewById(R.id.btn_clear);
+        tvVerson = findViewById(R.id.tv_verson);
+        btnOriginalCmd = findViewById(R.id.btn_original_cmd);
+        btnChangeB = findViewById(R.id.btn_change_b);
+        btnPsam4442 = findViewById(R.id.btn_get_psam4442);
+        btn4442Cmd = findViewById(R.id.btn_4442_cmd);
         btnOpenSerial.setOnClickListener(this);
-        btn_change_b.setOnClickListener(this);
+        btnChangeB.setOnClickListener(this);
         btnOriginalCmd.setOnClickListener(this);
         btn1Activite.setOnClickListener(this);
         btn2Activite.setOnClickListener(this);
@@ -158,50 +176,93 @@ public class MainActivity extends Activity implements View.OnClickListener {
         btnClear.setOnClickListener(this);
         btnPsam4442.setOnClickListener(this);
         btn4442Cmd.setOnClickListener(this);
-        tvShowData = (TextView) findViewById(R.id.tv_show_message);
+        tvShowData = findViewById(R.id.tv_show_message);
         tvShowData.setMovementMethod(ScrollingMovementMethod.getInstance());
-        edvADPU = (EditText) findViewById(R.id.edv_adpu_cmd);
-//        edvADPU.setText("0084000008");
-//        edvADPU.setText("0020000003");
-//        edvADPU.setText("80f0800008122a31632a3bafe0");
+        edvADPU = findViewById(R.id.edv_adpu_cmd);
         edvADPU.setText("00A404000BA000000003454E45524759");
     }
 
-    String send_data = "";
-    //获取psam实例
-    IPsam psamIntance = PsamManager.getPsamIntance();
+    private void openFailed(final String msg) {
+        runOnUiThread(new Runnable() {
+                          @Override
+                          public void run() {
+                              ProgressDialogUtils.dismissProgressDialog();
+
+                              new AlertDialog.Builder(MainActivity.this).setCancelable(false).setMessage("二代证模块初始化失败,请前往调试工具中修改参数" + msg)
+                                      .setPositiveButton("确定", new DialogInterface.OnClickListener() {
 
 
+                                          @Override
+                                          public void onClick(DialogInterface dialogInterface, int i) {
+                                              openConfig();
+
+                                          }
+                                      }).show();
+                          }
+                      }
+
+        );
+    }
+
+    /**
+     * 打开调试工具  修改配置
+     */
+    private void openConfig() {
+        //打开失败去下载
+        try {
+            Intent intent = new Intent();
+            intent.setAction("speedata.config");
+            startActivity(intent);
+        } catch (Exception e) {
+            //            downLoadDeviceApp();
+            new AlertDialog.Builder(this).setCancelable(false).setMessage("请去应用市场下载调试工具进行配置")
+                    .setPositiveButton("确定", null).show();
+        }
+
+    }
+
+    private void initDefaultDev() {
+        try {
+            psamIntance.initDev(this);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            openFailed(e.getMessage());
+        }
+    }
+
+
+    @SuppressLint("SetTextI18n")
     @Override
     public void onClick(View v) {
         if (v == imgReset) {
             psamIntance.resetDev();
-//            psamIntance.resetDev(DeviceControl.PowerType.MAIN,66);
+
         } else if (v == btn1Activite) {
             psamflag = 1;
             byte[] data = psamIntance.PsamPower(IPsam.PowerType.Psam1);
-            if (data != null)
+            if (data != null) {
                 tvShowData.setText("Psam1 activite \n" + DataConversionUtils.byteArrayToString
                         (data));
-            else {
+            } else {
                 tvShowData.setText("failed");
             }
         } else if (v == btn2Activite) {
             psamflag = 2;
             byte[] data = psamIntance.PsamPower(IPsam.PowerType.Psam2);
-            if (data != null)
+            if (data != null) {
                 tvShowData.setText("Psam2 activite \n" + DataConversionUtils.byteArrayToString
                         (data));
-            else {
+            } else {
                 tvShowData.setText("failed");
             }
         } else if (v == btnPsam4442) {
             psamflag = 3;
             byte[] data = psamIntance.PsamPower(IPsam.PowerType.Psam4442On);
-            if (data != null)
+            if (data != null) {
                 tvShowData.setText("Psam2 activite \n" + DataConversionUtils.byteArrayToString
                         (data));
-            else {
+            } else {
                 tvShowData.setText("failed");
             }
 
@@ -229,27 +290,29 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     byte[] data = psamIntance.WriteCmd(new byte[]{0x00, (byte) 0x84, 0x00, 0x00,
                             0x08}, IPsam
                             .PowerType.Psam2);
-                    if (data != null)
+                    if (data != null) {
                         tvShowData.append("rece->" + DataConversionUtils.byteArrayToString(data));
+                    }
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
             }
         } else if (v == btnSendAdpu) {
             String temp_cmd = edvADPU.getText().toString();
-            if ("".equals(temp_cmd) || temp_cmd.length() % 2 > 0 || temp_cmd.length() < 4) {
-                Toast.makeText(mContext, "Please enter a valid instruction！", Toast.LENGTH_SHORT)
-                        .show();
-                return;
-            }
+            //            if ("".equals(temp_cmd) || temp_cmd.length() % 2 > 0 || temp_cmd.length() < 4) {
+            //                Toast.makeText(mContext, "Please enter a valid instruction！", Toast.LENGTH_SHORT)
+            //                        .show();
+            //                return;
+            //            }
             send_data = temp_cmd;
             if (psamflag == 1) {
                 tvShowData.setText("Psam1 Send data：\n" + send_data + "\n");
                 try {
                     byte[] data = psamIntance.WriteCmd(DataConversionUtils
                             .HexString2Bytes(temp_cmd), IPsam.PowerType.Psam1);
-                    if (data != null)
+                    if (data != null) {
                         tvShowData.append("rece->" + DataConversionUtils.byteArrayToString(data));
+                    }
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
@@ -259,8 +322,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 try {
                     byte[] data = psamIntance.WriteCmd(DataConversionUtils
                             .HexString2Bytes(temp_cmd), IPsam.PowerType.Psam2);
-                    if (data != null)
+                    if (data != null) {
                         tvShowData.append("rece->" + DataConversionUtils.byteArrayToString(data));
+                    }
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
@@ -278,8 +342,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 try {
                     byte[] data = psamIntance.WriteOriginalCmd(DataConversionUtils
                             .HexString2Bytes(temp_cmd), IPsam.PowerType.Psam1);
-                    if (data != null)
+                    if (data != null) {
                         tvShowData.append("rece->" + DataConversionUtils.byteArrayToString(data));
+                    }
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
@@ -289,15 +354,17 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 try {
                     byte[] data = psamIntance.WriteOriginalCmd(DataConversionUtils
                             .HexString2Bytes(temp_cmd), IPsam.PowerType.Psam2);
-                    if (data != null)
+                    if (data != null) {
                         tvShowData.append("rece->" + DataConversionUtils.byteArrayToString(data));
+                    }
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
             }
         } else if (v == btnClear) {
             tvShowData.setText("");
-        } else if (v == btn_change_b) {
+            //            test();
+        } else if (v == btnChangeB) {
             CmdDialog();
         } else if (v == btnOpenSerial) {
             OpenSerialDialog();
@@ -308,8 +375,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
 
     }
-
-    int yourChoice;
 
     private void showSingleChoiceDialog(final String temp_cmd) {
         final String[] items = {"上电", "下电", "读卡", "写卡", "读密", "核密", "修密"};
@@ -388,13 +453,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
                                         e.printStackTrace();
                                     }
                                     break;
+                                default:
+                                    break;
                             }
-                            if (data != null)
+                            if (data != null) {
                                 tvShowData.append("rece->" + DataConversionUtils.byteArrayToString(data));
-                            else
+                            } else {
                                 Toast.makeText(MainActivity.this,
                                         "请检查指令",
                                         Toast.LENGTH_SHORT).show();
+                            }
                         }
                     }
                 });
@@ -407,7 +475,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         final View dialogView = LayoutInflater.from(this)
                 .inflate(R.layout.dialog_change_layout, null);
 
-        final EditText botelv = (EditText) dialogView.findViewById(R.id.botelv);
+        final EditText botelv = dialogView.findViewById(R.id.botelv);
         customizeDialog.setTitle("打开新串口");
         customizeDialog.setView(dialogView);
         customizeDialog.setPositiveButton("打开",
@@ -420,7 +488,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                                 if (serialPort != null) {
                                     serialPort.CloseSerial(serialPort.getFd());
                                 }
-                                serialPort.OpenSerial(SerialPort.SERIAL_TTYMT3, b);
+                                serialPort.OpenSerial(SerialPortSpd.SERIAL_TTYMT3, b);
                                 Toast.makeText(mContext, "新串口已打开", Toast.LENGTH_SHORT).show();
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -447,18 +515,18 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     public void onClick(DialogInterface dialog, int which) {
                         if (!botelv.getText().toString().equals("") && !cmds.getText().toString().equals("")) {
                             int b = Integer.parseInt(botelv.getText().toString());
-//                            int b = Integer.parseInt(cmds.getText().toString());
+                            //                            int b = Integer.parseInt(cmds.getText().toString());
                             try {
-//                            deviceControl = new DeviceControl(DeviceControl.PowerType.MAIN, 96);
+                                //                            deviceControl = new DeviceControl2(DeviceControl2.PowerType.MAIN, 96);
                                 String ss = "aa bb 06 00 00 00 01 01 " + cmds.getText().toString() + " " + cmds.getText().toString();
-//                byte[] dd = DataConversionUtils.HexString2Bytes(ss);
-//                byte[] ssss = new byte[]{0x00,0x00,0x01,0x05,0x05};
-//                byte tmp=0;
-//                for (int i = 0; i < ssss.length; i++) {
-//                     tmp^=ssss[i];
-//                }
-                                serialPort.OpenSerial(SerialPort.SERIAL_TTYMT3, b);
-//                            deviceControl.PowerOnDevice();
+                                //                byte[] dd = DataConversionUtils.HexString2Bytes(ss);
+                                //                byte[] ssss = new byte[]{0x00,0x00,0x01,0x05,0x05};
+                                //                byte tmp=0;
+                                //                for (int i = 0; i < ssss.length; i++) {
+                                //                     tmp^=ssss[i];
+                                //                }
+                                serialPort.OpenSerial(SerialPortSpd.SERIAL_TTYMT3, b);
+                                //                            deviceControl.PowerOnDevice();
                                 serialPort.WriteSerialByte(serialPort.getFd(), DataConversionUtils.HexString2Bytes(ss));
                                 byte[] sss = serialPort.ReadSerial(serialPort.getFd(), 512);
                                 if (sss != null) {
@@ -479,40 +547,21 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     }
 
-    /**
-     * 截取数组
-     *
-     * @param bytes  被截取数组
-     * @param start  被截取数组开始截取位置
-     * @param length 新数组的长度
-     * @return 新数组
-     */
-    public static byte[] cutBytes(byte[] bytes, int start, int length) {
-        byte[] res = new byte[length];
-        System.arraycopy(bytes, start, res, 0, length);
-        return res;
-    }
-
-    private void initDevice() {
-        try {
-            psamIntance.initDev(this);//初始化设备
-//            psamIntance.initDev("ttyMT1",115200, DeviceControl.PowerType.MAIN,this,67);
-//            deviceControl1 = new DeviceControl(DeviceControl.PowerType.MAIN);
-//            deviceControl1.MainPowerOn(73);
-//            psamIntance.resetDev(DeviceControl.PowerType.MAIN,66);
-            psamIntance.resetDev();//复位
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(0);
-        }
-    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
         try {
+            if (deviceControl1 != null) {
+                if (Build.MODEL.equals("SD100")) {
+                    //                    deviceControl1.gtPower("uhf_close");
+                    //                    deviceControl1.gtPower("close");
+                    deviceControl1.gtPower("psam_close");
+                    deviceControl1.gtPower("psam_rst_off");
+                } else {
+                    deviceControl1.PowerOffDevice();
+                }
+            }
             psamIntance.releaseDev();
-            deviceControl.MainPowerOff(73);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -532,4 +581,5 @@ public class MainActivity extends Activity implements View.OnClickListener {
             return "版本号错误";
         }
     }
+
 }
