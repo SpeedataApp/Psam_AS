@@ -11,7 +11,7 @@
     implementation 'com.alibaba:fastjson:1.2.54'
   }
 ```
-**外层gtadle添加
+**外层gradle添加
 ```
 repositories {
         jcenter()
