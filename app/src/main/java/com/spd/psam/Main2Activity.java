@@ -40,27 +40,8 @@ import java.util.List;
 import speedatacom.a3310libs.PsamManager;
 import speedatacom.a3310libs.inf.IPsam;
 
-
-public class MainActivity extends Activity implements View.OnClickListener {
+public class Main2Activity extends Activity implements View.OnClickListener {
     public ReadBean.PasmBean psam;
-    String[] permiss = {"android.permission.ACCESS_NETWORK_STATE"
-            , "android.permission.ACCESS_WIFI_STATE"
-            , "android.permission.READ_PHONE_STATE"
-            , "android.permission.INTERNET"};
-    PermissionListener listener = new PermissionListener() {
-        @Override
-        public void onSucceed(int requestCode, @NonNull List<String> grantPermissions) {
-
-        }
-
-        @Override
-        public void onFailed(int requestCode, @NonNull List<String> deniedPermissions) {
-            // 用户否勾选了不再提示并且拒绝了权限，那么提示用户到设置中授权。
-            if (AndPermission.hasAlwaysDeniedPermission(MainActivity.this, deniedPermissions)) {
-                AndPermission.defaultSettingDialog(MainActivity.this, 300).show();
-            }
-        }
-    };
     String send_data = "";
     int yourChoice;
     private Button btn1Activite, btn2Activite, btnGetRomdan,
@@ -81,13 +62,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
     /**
      * 截取数组
      *
-     * @param bytes
-     *         被截取数组
-     * @param start
-     *         被截取数组开始截取位置
-     * @param length
-     *         新数组的长度
-     *
+     * @param bytes  被截取数组
+     * @param start  被截取数组开始截取位置
+     * @param length 新数组的长度
      * @return 新数组
      */
     public static byte[] cutBytes(byte[] bytes, int start, int length) {
@@ -104,19 +81,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         initUI();
         showConfig();
         initDefaultDev();
-        //        initDevice();
         serialPort = new SerialPortSpd();
         edvADPU.clearFocus();
-        //        permission(permiss);
-    }
-
-    private void permission(String[] permiss) {
-        AndPermission.with(this).permission(Manifest.permission.READ_PHONE_STATE).callback(listener).rationale(new RationaleListener() {
-            @Override
-            public void showRequestPermissionRationale(int requestCode, Rationale rationale) {
-                AndPermission.rationaleDialog(MainActivity.this, rationale).show();
-            }
-        }).start();
     }
 
     @Override
@@ -148,7 +114,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
         tvConfig.append("串口:" + psam.getSerialPort() + "  波特率：" + psam.getBraut() + " 上电类型:" +
                 psam.getPowerType() + " GPIO:" + gpio + " resetGpio:" + psam.getResetGpio());
-        //        tvConfig.append("串口:ttyMT1" + "  波特率：115200" + " gpio:93" + " resetGpio:94");
     }
 
     private void initUI() {
@@ -188,10 +153,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                           public void run() {
                               ProgressDialogUtils.dismissProgressDialog();
 
-                              new AlertDialog.Builder(MainActivity.this).setCancelable(false).setMessage("二代证模块初始化失败,请前往调试工具中修改参数" + msg)
+                              new AlertDialog.Builder(Main2Activity.this).setCancelable(false).setMessage("PSAM模块初始化失败,请前往调试工具中修改参数" + msg)
                                       .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-
-
                                           @Override
                                           public void onClick(DialogInterface dialogInterface, int i) {
                                               openConfig();
@@ -224,7 +187,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private void initDefaultDev() {
         try {
             psamIntance.initDev(this);
-
+//            psamIntance.initDev("ttyMT1",115200, DeviceControlSpd.PowerType.NEW_MAIN,Main2Activity.this,75,74);
+//            psamIntance.resetDev(DeviceControlSpd.PowerType.NEW_MAIN,74);
+            psamIntance.resetDev();
         } catch (IOException e) {
             e.printStackTrace();
             openFailed(e.getMessage());
@@ -380,7 +345,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         final String[] items = {"上电", "下电", "读卡", "写卡", "读密", "核密", "修密"};
         yourChoice = -1;
         AlertDialog.Builder singleChoiceDialog =
-                new AlertDialog.Builder(MainActivity.this);
+                new AlertDialog.Builder(Main2Activity.this);
         singleChoiceDialog.setTitle("4442卡片指令");
         // 第二个参数是默认选项，此处设置为0
         singleChoiceDialog.setSingleChoiceItems(items, -1,
@@ -459,7 +424,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             if (data != null) {
                                 tvShowData.append("rece->" + DataConversionUtils.byteArrayToString(data));
                             } else {
-                                Toast.makeText(MainActivity.this,
+                                Toast.makeText(Main2Activity.this,
                                         "请检查指令",
                                         Toast.LENGTH_SHORT).show();
                             }
@@ -553,8 +518,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         try {
             if (deviceControl1 != null) {
                 if (Build.MODEL.equals("SD100")) {
-                    //                    deviceControl1.gtPower("uhf_close");
-                    //                    deviceControl1.gtPower("close");
                     deviceControl1.gtPower("psam_close");
                     deviceControl1.gtPower("psam_rst_off");
                 } else {
