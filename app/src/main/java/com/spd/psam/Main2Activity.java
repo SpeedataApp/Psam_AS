@@ -1,6 +1,5 @@
 package com.spd.psam;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -13,7 +12,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.serialport.DeviceControlSpd;
 import android.serialport.SerialPortSpd;
-import android.support.annotation.NonNull;
 import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,10 +25,6 @@ import com.speedata.libutils.DataConversionUtils;
 import com.speedata.libutils.ReadBean;
 import com.speedata.utils.ProgressDialogUtils;
 import com.umeng.analytics.MobclickAgent;
-import com.yanzhenjie.permission.AndPermission;
-import com.yanzhenjie.permission.PermissionListener;
-import com.yanzhenjie.permission.Rationale;
-import com.yanzhenjie.permission.RationaleListener;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -187,8 +181,8 @@ public class Main2Activity extends Activity implements View.OnClickListener {
     private void initDefaultDev() {
         try {
             psamIntance.initDev(this);
-//            psamIntance.initDev("ttyMT1",115200, DeviceControlSpd.PowerType.NEW_MAIN,Main2Activity.this,75,74);
-//            psamIntance.resetDev(DeviceControlSpd.PowerType.NEW_MAIN,74);
+//            psamIntance.initDev("ttyMT1",115200, DeviceControlSpd.PowerType.NEW_MAIN,Main2Activity.this,16);
+//            psamIntance.resetDev(DeviceControlSpd.PowerType.NEW_MAIN,23);
             psamIntance.resetDev();
         } catch (IOException e) {
             e.printStackTrace();
