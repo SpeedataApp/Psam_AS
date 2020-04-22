@@ -1,27 +1,4 @@
 # Psam
--  导入依赖库
-
-
-**AndroidStudio** build.gradle中的dependencies中添加
-
-```
- dependencies {
-    implementation 'com.github.SpeedataG:Device:1.6.4'
-    implementation 'com.speedata:psam:1.5.4'
-    implementation 'com.alibaba:fastjson:1.2.54'
-  }
-```
-**外层gradle添加
-```
-repositories {
-        jcenter()
-        google()
-        maven { url 'https://www.jitpack.io' }
- }
-
-```   
-**Eclipse** 需导入libs库 LibDevice 和 LibIdentity
-依赖以上两个lib库  运行时编译即可
 
 1. initDev 初始化设备
 1. PsamPower 软使能
@@ -74,7 +51,7 @@ repositories {
 
 |函数原型|void initDev(Context context) throws IOException;	                                   |
 -------    |-------
-|功能描述  |自动初始化模块|
+|功能描述  |自动初始化模块，此方法依赖fastjson.jar|
 |参数描述  |Context context 上下文|
 |返回类型  |失败抛出异常|
 
